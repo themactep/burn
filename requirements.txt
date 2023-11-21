@@ -1,2 +1,4 @@
 progressbar
 pyserial
+argparse
+json

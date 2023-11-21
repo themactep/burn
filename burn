@@ -11,27 +11,31 @@ import settings
 
 
 class bootdownload():
-    '''
+    """
     Hisilicon boot downloader
 
-    >>> downloader = bootdownload()
-    >>> downloader.burn(filename)
+    >> downloader = bootdownload()
+    >> downloader.burn(filename)
 
-    '''
+    """
+
     def init_bootmode(self):
+        print("Initializing boot mode\n")
         i = 0
         counter = 0
         while i < 30:
             in_bin = self.s.read(1)
             if in_bin == b'\x00':
+                print(". ")
                 continue
             if in_bin == b'\x20':
+                print("+ ")
                 counter = counter + 1
             if counter == 5:
                 self.s.flushOutput()
                 self.s.write(settings.AA)
                 self.s.flushInput()
-                print("Welcome to boot-mode\n")
+                print("Welcome to boot mode\n")
                 return None
             i = i + 1
         sys.exit(1)
@@ -40,7 +44,7 @@ class bootdownload():
         serialport = args.port
         chiptype = args.chip
         self.DEBUG = args.debug
-        print("Trying open", serialport)
+        print("Opening serial port", serialport)
         try:
             self.s = serial.Serial(
                 port=serialport,
@@ -49,17 +53,18 @@ class bootdownload():
                 stopbits=serial.STOPBITS_ONE,
                 bytesize=serial.EIGHTBITS,
                 timeout=None
-                #timeout = 1
+                # timeout = 1
             )
+            print("Serial connection established.", serialport)
             self.init_bootmode()
 
         except serial.serialutil.SerialException:
-            #no serial connection
+            # no serial connection
             self.s = None
-            print("\nFailed to open serial!", serialport)
+            print("\nFailed to open serial port", serialport)
             sys.exit(2)
 
-        with open(chiptype+".json", "r") as read_file:
+        with open(chiptype + ".json", "r") as read_file:
             data = json.load(read_file)
         print(data)
         self.chip = data
@@ -201,7 +206,7 @@ class bootdownload():
         seq = 1
         data = data[:first_length]
         for chunk in (
-            data[_:_+settings.MAX_DATA_LEN] for _ in range(
+            data[_:_ + settings.MAX_DATA_LEN] for _ in range(
                 0, first_length, settings.MAX_DATA_LEN
             )
         ):
@@ -209,7 +214,7 @@ class bootdownload():
                 seq,
                 chunk
             )
-            bar.update(seq*len(chunk)) if self.DEBUG == 0 else None
+            bar.update(seq * len(chunk)) if self.DEBUG == 0 else None
             seq += 1
         bar.finish() if self.DEBUG == 0 else None
         self.send_tail_frame(seq)
@@ -226,15 +231,15 @@ class bootdownload():
         ]).start() if self.DEBUG == 0 else None
         seq = 1
         for chunk in (
-            data[_:_+settings.MAX_DATA_LEN] for _ in range(
-                0, length, settings.MAX_DATA_LEN
-            )
+                data[_:_ + settings.MAX_DATA_LEN] for _ in range(
+            0, length, settings.MAX_DATA_LEN
+        )
         ):
             self.send_data_frame(
                 seq,
                 chunk
             )
-            bar.update(seq*len(chunk)) if self.DEBUG == 0 else None
+            bar.update(seq * len(chunk)) if self.DEBUG == 0 else None
             seq += 1
         bar.finish() if self.DEBUG == 0 else None
         self.send_tail_frame(seq)
